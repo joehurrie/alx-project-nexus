@@ -1,26 +1,37 @@
-import { FilterPanel } from '@/components/products/filter-panel';
-import  ProductGrid  from '@/components/products/product-grid';
-import { SearchBar } from '@/components/products/search-bar';
+import ProductsPageClient from './page-client';
+import { client } from '@/lib/apolloClient';
+import { gql } from '@apollo/client';
+import type { ProductsResponse, Product } from '@/constants/interfaces';
 
-export default function ProductsPage() {
-  return (
-    <div className="-m-8">
-      <div className="bg-primary p-8 text-primary-foreground mb-8">
-        <div className="container mx-auto">
-          <h1 className="text-3xl font-bold font-headline mb-2">
-            Explore Sustainable Products
-          </h1>
-          <p className="text-primary-foreground/80 mb-6 max-w-2xl">
-            Search, filter, and compare thousands of eco-friendly products to
-            find the best options for you and the planet.
-          </p>
-          <SearchBar />
-        </div>
-      </div>
-      <div className="container mx-auto">
-        <FilterPanel />
-        <ProductGrid />
-      </div>
-    </div>
-  );
+const GET_PRODUCTS = gql`
+  query GetProducts {
+    Products(limit: 20) {
+      docs {
+        id
+        name
+        price
+        brand
+        impactTags
+        impactScore
+        image { url }
+        category
+      }
+    }
+  }
+`;
+
+export default async function ProductsPage() {
+  const { data } = await client.query<ProductsResponse>({ query: GET_PRODUCTS });
+  const products: Product[] = (data?.Products?.docs || []).map((p: any) => ({
+    id: p.id,
+    name: p.name,
+    brand: p.brand || 'Unknown Brand',
+    price: `KSh ${p.price}`,
+    image: p.image?.url ? `https://ecowise-backend.vercel.app${p.image.url}` : '/fallback.jpg',
+    score: typeof p.impactScore === 'number' ? p.impactScore : 0,
+    scoreColor: p.impactScore >= 8.5 ? 'high' : p.impactScore >= 7 ? 'medium' : 'low',
+    tags: Array.isArray(p.impactTags) ? p.impactTags : [],
+    category: typeof p.category === 'string' ? p.category : '',
+  }));
+  return <ProductsPageClient initialProducts={products} />;
 }

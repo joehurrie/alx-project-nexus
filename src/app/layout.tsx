@@ -2,6 +2,8 @@ import type { Metadata } from 'next';
 import './globals.css';
 import { Toaster } from '@/components/ui/toaster';
 import { AppLayout } from '@/components/app-layout';
+import { Providers } from '@/store/providers'
+
 
 export const metadata: Metadata = {
   title: 'ecowise - Your Guide to Sustainable Shopping',
@@ -34,7 +36,11 @@ export default function RootLayout({
         />
       </head>
       <body className="font-body antialiased h-full bg-background">
-        <AppLayout>{children}</AppLayout>
+        <Providers>
+          <AppLayout>
+              {children}
+        </AppLayout>
+      </Providers>
         <Toaster />
       </body>
     </html>
